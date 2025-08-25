@@ -8,13 +8,12 @@ use matcracker\BlocksConverter\Loader;
 use matcracker\BlocksConverter\tasks\ToolBlockTask;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\Player;
+use pocketmine\player\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 use function count;
 
-final class ToolBlock extends Command implements PluginIdentifiableCommand{
+final class ToolBlock extends Command {
 	/**@var Player[] */
 	private static $players = [];
 	/** @var Loader */
@@ -27,6 +26,7 @@ final class ToolBlock extends Command implements PluginIdentifiableCommand{
 			'/toolblock'
 		);
 		$this->loader = $loader;
+        $this->setPermission("blocksconverter.command.toolblock");
 	}
 
 	/**

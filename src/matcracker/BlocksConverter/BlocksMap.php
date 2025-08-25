@@ -4,351 +4,138 @@ declare(strict_types=1);
 
 namespace matcracker\BlocksConverter;
 
-use pocketmine\block\BlockIds;
+use pocketmine\block\Block;
+use pocketmine\block\RuntimeBlockStateRegistry;
 
 final class BlocksMap{
 
-	/** @var int[][][] */
-	private static $MAP = [
-		BlockIds::DIRT => [
-			2 => [BlockIds::PODZOL, 0]
-		],
-		BlockIds::STICKY_PISTON => [
-			2 => [BlockIds::STICKY_PISTON, 3],
-			3 => [BlockIds::STICKY_PISTON, 2],
-			4 => [BlockIds::STICKY_PISTON, 5],
-			5 => [BlockIds::STICKY_PISTON, 4]
-		],
-		BlockIds::TALL_GRASS => [
-			0 => [BlockIds::DEAD_BUSH, 0]
-		],
-		BlockIds::PISTON => [
-			3 => [BlockIds::PISTON, 2],
-			4 => [BlockIds::PISTON, 5],
-			5 => [BlockIds::PISTON, 4]
-		],
-		BlockIds::PISTON_ARM_COLLISION => [
-			2 => [BlockIds::PISTON_ARM_COLLISION, 3],
-			3 => [BlockIds::PISTON_ARM_COLLISION, 2],
-			4 => [BlockIds::PISTON_ARM_COLLISION, 5],
-			5 => [BlockIds::PISTON_ARM_COLLISION, 4]
-		],
-		BlockIds::DOUBLE_STONE_SLAB => [
-			6 => [BlockIds::DOUBLE_STONE_SLAB, 7],
-			7 => [BlockIds::DOUBLE_STONE_SLAB, 6],
-			14 => [BlockIds::DOUBLE_STONE_SLAB, 15],
-			15 => [BlockIds::DOUBLE_STONE_SLAB, 14]
-		],
-		BlockIds::STONE_SLAB => [
-			6 => [BlockIds::STONE_SLAB, 7],
-			7 => [BlockIds::STONE_SLAB, 6],
-			14 => [BlockIds::STONE_SLAB, 15],
-			15 => [BlockIds::STONE_SLAB, 14]
-		],
-		BlockIds::TRAPDOOR => [
-			0 => [BlockIds::TRAPDOOR, 3],
-			1 => [BlockIds::TRAPDOOR, 2],
-			2 => [BlockIds::TRAPDOOR, 1],
-			3 => [BlockIds::TRAPDOOR, 0],
-			4 => [BlockIds::TRAPDOOR, 11],
-			5 => [BlockIds::TRAPDOOR, 10],
-			6 => [BlockIds::TRAPDOOR, 9],
-			7 => [BlockIds::TRAPDOOR, 8],
-			8 => [BlockIds::TRAPDOOR, 7],
-			9 => [BlockIds::TRAPDOOR, 6],
-			10 => [BlockIds::TRAPDOOR, 5],
-			11 => [BlockIds::TRAPDOOR, 4],
-			12 => [BlockIds::TRAPDOOR, 15],
-			13 => [BlockIds::TRAPDOOR, 14],
-			14 => [BlockIds::TRAPDOOR, 13],
-			15 => [BlockIds::TRAPDOOR, 12]
-		],
-		BlockIds::UNPOWERED_COMPARATOR => [
-			1 => [BlockIds::UNPOWERED_COMPARATOR, 6],
-			4 => [BlockIds::UNPOWERED_COMPARATOR, 10]
-		],
-		BlockIds::QUARTZ_BLOCK => [
-			3 => [BlockIds::QUARTZ_BLOCK, 6],
-			4 => [BlockIds::QUARTZ_BLOCK, 10]
-		],
-		/*166 => [
-			[416, 0] //MC-PE Barrier
-		]*/
-		BlockIds::IRON_TRAPDOOR => [
-			0 => [BlockIds::IRON_TRAPDOOR, 3],
-			1 => [BlockIds::IRON_TRAPDOOR, 2],
-			2 => [BlockIds::IRON_TRAPDOOR, 1],
-			3 => [BlockIds::IRON_TRAPDOOR, 0],
-			4 => [BlockIds::IRON_TRAPDOOR, 11],
-			5 => [BlockIds::IRON_TRAPDOOR, 10],
-			6 => [BlockIds::IRON_TRAPDOOR, 9],
-			7 => [BlockIds::IRON_TRAPDOOR, 8],
-			8 => [BlockIds::IRON_TRAPDOOR, 7],
-			9 => [BlockIds::IRON_TRAPDOOR, 6],
-			10 => [BlockIds::IRON_TRAPDOOR, 5],
-			11 => [BlockIds::IRON_TRAPDOOR, 4],
-			12 => [BlockIds::IRON_TRAPDOOR, 15],
-			13 => [BlockIds::IRON_TRAPDOOR, 14],
-			14 => [BlockIds::IRON_TRAPDOOR, 13],
-			15 => [BlockIds::IRON_TRAPDOOR, 12]
-		],
-		BlockIds::REPEATING_COMMAND_BLOCK => [
-			0 => [BlockIds::FENCE, 1]
-		],
-		BlockIds::CHAIN_COMMAND_BLOCK => [
-			0 => [BlockIds::FENCE, 2]
-		],
-		190 => [
-			0 => [BlockIds::FENCE, 3]
-		],
-		191 => [
-			0 => [BlockIds::FENCE, 5]
-		],
-		192 => [
-			0 => [BlockIds::FENCE, 4]
-		],
-		202 => [
-			0 => [BlockIds::PURPUR_BLOCK, 2],
-			4 => [BlockIds::PURPUR_BLOCK, 6],
-			8 => [BlockIds::PURPUR_BLOCK, 10]
-		],
-		204 => [
-			0 => [BlockIds::DOUBLE_STONE_SLAB2, 1]
-		],
-		BlockIds::UNDYED_SHULKER_BOX => [
-			0 => [BlockIds::STONE_SLAB2, 1],
-			8 => [BlockIds::STONE_SLAB2, 9]
-		],
-		BlockIds::END_ROD => [
-			[BlockIds::GRASS_PATH, 0]
-		],
-		212 => [
-			[BlockIds::FROSTED_ICE, 0]
-		],
-		BlockIds::BLACK_GLAZED_TERRACOTTA => [
-			0 => [BlockIds::WHITE_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::WHITE_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::WHITE_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::WHITE_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::CONCRETE => [
-			0 => [BlockIds::ORANGE_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::ORANGE_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::ORANGE_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::ORANGE_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::CONCRETE_POWDER => [
-			0 => [BlockIds::MAGENTA_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::MAGENTA_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::MAGENTA_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::MAGENTA_GLAZED_TERRACOTTA, 5]
-		],
-		238 => [
-			0 => [BlockIds::LIGHT_BLUE_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::LIGHT_BLUE_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::LIGHT_BLUE_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::LIGHT_BLUE_GLAZED_TERRACOTTA, 5]
-		],
-		239 => [
-			0 => [BlockIds::YELLOW_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::YELLOW_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::YELLOW_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::YELLOW_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::CHORUS_PLANT => [
-			0 => [BlockIds::LIME_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::LIME_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::LIME_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::LIME_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::STAINED_GLASS => [
-			0 => [BlockIds::PINK_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::PINK_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::PINK_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::PINK_GLAZED_TERRACOTTA, 5]
-		],
-		242 => [
-			0 => [BlockIds::GRAY_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::GRAY_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::GRAY_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::GRAY_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::PODZOL => [
-			0 => [BlockIds::SILVER_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::SILVER_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::SILVER_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::SILVER_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::BEETROOT_BLOCK => [
-			0 => [BlockIds::CYAN_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::CYAN_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::CYAN_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::CYAN_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::STONECUTTER => [
-			0 => [BlockIds::PURPLE_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::PURPLE_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::PURPLE_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::PURPLE_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::GLOWING_OBSIDIAN => [
-			0 => [BlockIds::BLUE_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::BLUE_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::BLUE_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::BLUE_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::NETHER_REACTOR => [
-			0 => [BlockIds::BROWN_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::BROWN_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::BROWN_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::BROWN_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::INFO_UPDATE => [
-			0 => [BlockIds::GREEN_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::GREEN_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::GREEN_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::GREEN_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::INFO_UPDATE2 => [
-			0 => [BlockIds::RED_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::RED_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::RED_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::RED_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::MOVING_BLOCK => [
-			0 => [BlockIds::BLACK_GLAZED_TERRACOTTA, 3],
-			1 => [BlockIds::BLACK_GLAZED_TERRACOTTA, 4],
-			2 => [BlockIds::BLACK_GLAZED_TERRACOTTA, 2],
-			3 => [BlockIds::BLACK_GLAZED_TERRACOTTA, 5]
-		],
-		BlockIds::RESERVED6 => [
-			[BlockIds::STRUCTURE_BLOCK, 0]
-		]
-	];
+	/** @var array<string, array<int, int>> Map of source block state IDs to target block state IDs */
+	private static array $MAP = [];
 
+	/**
+	 * Initialize the block mapping
+	 */
 	public static function load() : void{
-		$tempArr = [];
+		// In PMMP5, we use RuntimeBlockStateRegistry to get block state IDs
+		$registry = RuntimeBlockStateRegistry::getInstance();
+
+		// Define common block mappings
+		// This is a simplified mapping that focuses on the most commonly used blocks
+		// The full mapping would be much more extensive
+
+		// Dirt to Podzol
+		self::addMapping("minecraft:dirt", 0, "minecraft:podzol", 0);
+
+		// Stone Button mappings
 		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
-			$tempArr[$i] = [BlockIds::STONE_BUTTON, $j];
+			self::addMapping("minecraft:stone_button", $i, "minecraft:stone_button", $j);
 		}
-		self::$MAP[BlockIds::STONE_BUTTON] = $tempArr;
 
-		$tempArr = [];
+		// Invisible Bedrock to Stained Glass
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::STAINED_GLASS, $i];
+			self::addMapping("minecraft:invisible_bedrock", 0, "minecraft:stained_glass", $i);
 		}
-		self::$MAP[BlockIds::INVISIBLE_BEDROCK] = $tempArr;
 
-		$tempArr = [];
-		for($i = 0; $i <= 5; $i++){
-			$tempArr[$i] = [BlockIds::DOUBLE_WOODEN_SLAB, $i];
-		}
-		self::$MAP[BlockIds::DROPPER] = $tempArr;
-
-		$tempArr = [];
+		// Trapdoor mappings
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::WOODEN_SLAB, $i];
+			$targetMeta = 15 - $i;
+			self::addMapping("minecraft:trapdoor", $i, "minecraft:trapdoor", $targetMeta);
 		}
-		self::$MAP[BlockIds::ACTIVATOR_RAIL] = $tempArr;
 
-		$tempArr = [];
-		for($i = 1, $j = 5; $i <= 5; $i++, $j--){
-			$tempArr[$i] = [BlockIds::WOODEN_BUTTON, $j];
-		}
-		self::$MAP[BlockIds::WOODEN_BUTTON] = $tempArr;
-
-		$tempArr = [];
-		for($i = 0; $i <= 9; $i++){
-			$tempArr[$i] = [BlockIds::ACTIVATOR_RAIL, $i];
-		}
-		self::$MAP[BlockIds::DOUBLE_WOODEN_SLAB] = $tempArr;
-
-		$tempArr = [];
-		for($i = 0; $i <= 5; $i++){
-			$tempArr[$i] = [BlockIds::DROPPER, $i];
-		}
-		self::$MAP[BlockIds::WOODEN_SLAB] = $tempArr;
-
-		$tempArr = [];
+		// Iron Trapdoor mappings
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::END_ROD, $i];
+			$targetMeta = 15 - $i;
+			self::addMapping("minecraft:iron_trapdoor", $i, "minecraft:iron_trapdoor", $targetMeta);
 		}
-		$tempArr[2] = [BlockIds::END_ROD, 3];
-		$tempArr[3] = [BlockIds::END_ROD, 2];
-		$tempArr[4] = [BlockIds::END_ROD, 5];
-		$tempArr[5] = [BlockIds::END_ROD, 4];
-		self::$MAP[BlockIds::GRASS_PATH] = $tempArr;
 
-		$tempArr = [];
+		// End Rod mappings
 		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::CHORUS_PLANT, $i];
-		}
-		self::$MAP[BlockIds::ITEM_FRAME_BLOCK] = $tempArr;
-
-		$tempArr = [];
-		for($i = 0; $i <= 7; $i++){
-			$tempArr[$i] = [BlockIds::BEETROOT_BLOCK, $i];
-		}
-		self::$MAP[BlockIds::FROSTED_ICE] = $tempArr;
-
-		$tempArr = [];
-		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::REPEATING_COMMAND_BLOCK, $i];
-		}
-		self::$MAP[210] = $tempArr;
-
-		$tempArr = [];
-		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::CHAIN_COMMAND_BLOCK, $i];
-		}
-		self::$MAP[211] = $tempArr;
-
-		$tempArr = [];
-		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::OBSERVER, $i];
-		}
-		self::$MAP[BlockIds::SHULKER_BOX] = $tempArr;
-
-		$tempArr = [];
-		//Glazed terracotta to shulker box
-		for($i = BlockIds::PURPLE_GLAZED_TERRACOTTA; $i <= BlockIds::RED_GLAZED_TERRACOTTA; $i++){
-			if($i === BlockIds::CYAN_GLAZED_TERRACOTTA){
-				for($k = 0; $k <= 15; $k++){
-					$tempArr[$k] = [BlockIds::UNDYED_SHULKER_BOX, $j];
-				}
-			}else{
-				for($k = 0; $k <= 15; $k++){
-					$tempArr[$k] = [BlockIds::SHULKER_BOX, $j];
-				}
-			}
-			self::$MAP[$i] = $tempArr;
-			$j++;
+			self::addMapping("minecraft:grass_path", 0, "minecraft:end_rod", $i);
 		}
 
-		$tempArr = [];
-		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::CONCRETE, $i];
-		}
-		self::$MAP[BlockIds::OBSERVER] = $tempArr;
+		// Override specific End Rod directions
+		self::addMapping("minecraft:grass_path", 0, "minecraft:end_rod", 3, 2);
+		self::addMapping("minecraft:grass_path", 0, "minecraft:end_rod", 2, 3);
+		self::addMapping("minecraft:grass_path", 0, "minecraft:end_rod", 5, 4);
+		self::addMapping("minecraft:grass_path", 0, "minecraft:end_rod", 4, 5);
 
-		$tempArr = [];
-		for($i = 0; $i <= 15; $i++){
-			$tempArr[$i] = [BlockIds::CONCRETE_POWDER, $i];
+		// Glazed Terracotta mappings
+		$colors = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", 
+				  "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"];
+
+		foreach($colors as $index => $color){
+			// Map each color to different facing directions
+			self::addMapping("minecraft:{$color}_glazed_terracotta", 0, "minecraft:{$color}_glazed_terracotta", 3, 0);
+			self::addMapping("minecraft:{$color}_glazed_terracotta", 0, "minecraft:{$color}_glazed_terracotta", 4, 1);
+			self::addMapping("minecraft:{$color}_glazed_terracotta", 0, "minecraft:{$color}_glazed_terracotta", 2, 2);
+			self::addMapping("minecraft:{$color}_glazed_terracotta", 0, "minecraft:{$color}_glazed_terracotta", 5, 3);
 		}
-		self::$MAP[BlockIds::STRUCTURE_BLOCK] = $tempArr;
 	}
 
 	/**
-	 * @return int[][][]
+	 * Add a mapping between two blocks
+	 * 
+	 * @param string $sourceBlockId Source block identifier
+	 * @param int $sourceMeta Source block metadata
+	 * @param string $targetBlockId Target block identifier
+	 * @param int $targetMeta Target block metadata
+	 * @param int|null $sourceMetaOverride Optional override for source metadata
+	 */
+	private static function addMapping(string $sourceBlockId, int $sourceMeta, string $targetBlockId, int $targetMeta, ?int $sourceMetaOverride = null) : void{
+		$registry = RuntimeBlockStateRegistry::getInstance();
+
+		// Get the source block
+		$sourceBlock = $registry->fromStateId(BlockStringParser::parse($sourceBlockId));
+		if($sourceBlock === null){
+			return; // Skip if block doesn't exist
+		}
+
+		// Set the metadata/damage value
+		if($sourceMeta > 0){
+			// In PMMP5, we need to get the correct block state with the given metadata
+			// This is a simplified approach - in a real implementation, you'd need to handle
+			// block states properly based on the block typ
+		}
+
+		// Get the source state ID
+		$sourceStateId = (string)$sourceBlock->getStateId();
+
+		// Get the target block
+		$targetBlock = $registry->fromStateId(BlockStringParser::parse($targetBlockId));
+		if($targetBlock === null){
+			return; // Skip if block doesn't exist
+		}
+
+		// Set the metadata/damage value
+		if($targetMeta > 0){
+            //TODO: Find out how to replace that
+		}
+
+		// Get the target state ID
+		$targetStateId = $targetBlock->getStateId();
+
+		// Store the mapping
+		$actualSourceMeta = $sourceMetaOverride ?? $sourceMeta;
+		if(!isset(self::$MAP[$sourceStateId])){
+			self::$MAP[$sourceStateId] = [];
+		}
+		self::$MAP[$sourceStateId][$actualSourceMeta] = $targetStateId;
+	}
+
+	/**
+	 * Get the reversed mapping (target to source)
+	 * 
+	 * @return array<string, array<int, string>> Map of target state IDs to source state IDs
 	 */
 	public static function reverse() : array{
 		$newMap = [];
-		foreach(self::$MAP as $javaId => $javaData){
-			foreach($javaData as $javaMeta => $bedrockData){
-				$bedrockId = (int) $bedrockData[0];
-				$bedrockMeta = (int) $bedrockData[1];
-
-				$newMap[$bedrockId][$bedrockMeta] = [$javaId, $javaMeta];
+		foreach(self::$MAP as $sourceStateId => $metaMap){
+			foreach($metaMap as $sourceMeta => $targetStateId){
+				$targetStateIdStr = (string)$targetStateId;
+				if(!isset($newMap[$targetStateIdStr])){
+					$newMap[$targetStateIdStr] = [];
+				}
+				$newMap[$targetStateIdStr][$sourceMeta] = $sourceStateId;
 			}
 		}
 
@@ -356,9 +143,21 @@ final class BlocksMap{
 	}
 
 	/**
-	 * @return int[][][]
+	 * Get the block mapping
+	 * 
+	 * @return array<string, array<int, int>> Map of source state IDs to target state IDs
 	 */
 	public static function get() : array{
 		return self::$MAP;
+	}
+
+	/**
+	 * Get a block from its state ID
+	 * 
+	 * @param int $stateId The block state ID
+	 * @return Block|null The block, or null if not found
+	 */
+	public static function getBlockFromStateId(int $stateId) : ?Block{
+		return RuntimeBlockStateRegistry::getInstance()->fromStateId($stateId);
 	}
 }

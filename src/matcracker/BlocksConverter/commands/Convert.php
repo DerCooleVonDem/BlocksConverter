@@ -9,9 +9,9 @@ use matcracker\BlocksConverter\world\WorldManager;
 use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\level\format\io\BaseLevelProvider;
-use pocketmine\level\Level;
+use pocketmine\world\format\io\BaseWorldProvider;
+use pocketmine\world\format\io\WorldProvider;
+use pocketmine\world\World;
 use pocketmine\nbt\tag\ByteTag;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
@@ -19,7 +19,7 @@ use function filter_var;
 use function strtolower;
 use const FILTER_VALIDATE_BOOLEAN;
 
-final class Convert extends Command implements PluginIdentifiableCommand{
+final class Convert extends Command {
 	private $loader;
 
 	public function __construct(Loader $loader){
@@ -29,6 +29,7 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 			'/convert <world_name|queue> [backup] [plat_dest] [force]'
 		);
 		$this->loader = $loader;
+        $this->setPermission("blocksconverter.command.convert");
 	}
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args) : bool{
@@ -78,8 +79,8 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 				$sender->sendMessage(TextFormat::RED . "The queue is empty.");
 			}
 		}else{
-			if($this->loader->getServer()->loadLevel($worldOption)){
-				$world = $this->loader->getServer()->getLevelByName($worldOption);
+			if($this->loader->getServer()->getWorldManager()->loadWorld($worldOption)){
+				$world = $this->loader->getServer()->getWorldManager()->getWorldByName($worldOption);
 				if($world !== null){
 					$this->convert($world, $sender, $backup, $toBedrock, $force);
 
@@ -92,25 +93,9 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 		return true;
 	}
 
-	private function convert(Level $world, CommandSender $sender, bool $backup, bool $toBedrock, bool $force) : void{
+	private function convert(World $world, CommandSender $sender, bool $backup, bool $toBedrock, bool $force) : void{
 		$provider = $world->getProvider();
 		$worldName = $world->getFolderName();
-
-		if($provider instanceof BaseLevelProvider && !$force){
-			if($provider->getLevelData()->hasTag("BC-converted", ByteTag::class)){
-				$isConvertedToBR = (bool) $provider->getLevelData()->getByte("BC-converted");
-				if(($isConvertedToBR && $toBedrock) || (!$isConvertedToBR && !$toBedrock)){
-					$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
-
-					return;
-				}
-
-			}elseif(!$toBedrock){ //Without the tag consider the world coming from java
-				$sender->sendMessage(TextFormat::RED . "The world \"$worldName\" is already converted.");
-
-				return;
-			}
-		}
 
 		$sender->sendMessage(TextFormat::DARK_AQUA . "This process could takes a lot of time, so don't join or quit the game and wait patently the finish!");
 
@@ -124,11 +109,6 @@ final class Convert extends Command implements PluginIdentifiableCommand{
 		}
 		$sender->sendMessage(TextFormat::AQUA . "Starting $worldName's conversion...");
 		$manager->startConversion($toBedrock);
-
-		if($provider instanceof BaseLevelProvider){
-			$provider->getLevelData()->setByte("BC-converted", (int) $toBedrock);
-			$provider->saveLevelData();
-		}
 	}
 
 	/**

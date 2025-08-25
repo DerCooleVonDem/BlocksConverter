@@ -6,20 +6,21 @@ namespace matcracker\BlocksConverter\world;
 
 use Exception;
 use FilesystemIterator;
-use InvalidStateException;
+use RuntimeException;
 use matcracker\BlocksConverter\BlocksMap;
 use matcracker\BlocksConverter\Loader;
 use matcracker\BlocksConverter\utils\Utils;
-use pocketmine\block\BlockIds;
-use pocketmine\level\format\Chunk;
-use pocketmine\level\format\EmptySubChunk;
-use pocketmine\level\format\io\exception\CorruptedChunkException;
-use pocketmine\level\format\io\leveldb\LevelDB;
-use pocketmine\level\format\io\region\Anvil;
-use pocketmine\level\format\io\region\McRegion;
-use pocketmine\level\format\io\region\PMAnvil;
-use pocketmine\level\Level;
-use pocketmine\tile\Sign;
+use pocketmine\block\Block;
+use pocketmine\block\RuntimeBlockStateRegistry;
+use pocketmine\world\format\Chunk;
+use pocketmine\world\format\SubChunk;
+use pocketmine\world\format\io\exception\CorruptedChunkException;
+use pocketmine\world\format\io\leveldb\LevelDB;
+use pocketmine\world\format\io\region\Anvil;
+use pocketmine\world\format\io\region\McRegion;
+use pocketmine\world\format\io\region\PMAnvil;
+use pocketmine\world\World;
+use pocketmine\block\tile\Sign;
 use pocketmine\utils\Binary;
 use pocketmine\utils\TextFormat;
 use RegexIterator;
@@ -34,7 +35,7 @@ use const PHP_EOL;
 class WorldManager{
 	/**@var Loader */
 	private $loader;
-	/**@var Level */
+	/**@var World */
 	private $world;
 	/**@var bool */
 	private $isConverting = false;
@@ -44,13 +45,13 @@ class WorldManager{
 	private $convertedBlocks = 0;
 	private $convertedSigns = 0;
 
-	public function __construct(Loader $loader, Level $world){
+	public function __construct(Loader $loader, World $world){
 		$this->loader = $loader;
 		$this->world = $world;
 		$this->worldName = $world->getFolderName();
 	}
 
-	public function getWorld() : Level{
+	public function getWorld() : World{
 		return $this->world;
 	}
 
@@ -66,7 +67,7 @@ class WorldManager{
 		$this->loader->getLogger()->debug("Restoring a backup of $this->worldName");
 		$srcPath = "{$this->loader->getDataFolder()}/backups/$this->worldName";
 		if(!$this->hasBackup()){
-			throw new InvalidStateException("This world never gets a backup.");
+			throw new RuntimeException("This world never gets a backup.");
 		}
 
 		$destPath = "{$this->loader->getServer()->getDataPath()}/worlds/$this->worldName";
@@ -79,8 +80,8 @@ class WorldManager{
 		return file_exists("{$this->loader->getDataFolder()}/backups/$this->worldName");
 	}
 
-	public function unloadLevel() : bool{
-		return $this->loader->getServer()->unloadLevel($this->world);
+	public function unloadWorld() : bool{
+		return $this->loader->getServer()->getWorldManager()->unloadWorld($this->world);
 	}
 
 	public function isConverting() : bool{
@@ -98,7 +99,7 @@ class WorldManager{
 		}
 
 		foreach($this->loader->getServer()->getOnlinePlayers() as $player){
-			$player->kick("The server is running a world conversion, try to join later.", false);
+			$player->kick("The server is running a world conversion, try to join later.");
 		}
 
 		$this->loader->getLogger()->debug("Starting world \"$this->worldName\" conversion...");
@@ -110,13 +111,15 @@ class WorldManager{
 		try{
 			if($provider instanceof LevelDB){
 				foreach($provider->getDatabase()->getIterator() as $key => $_){
-					if(strlen($key) === 9 and substr($key, -1) === LevelDB::TAG_VERSION){
+					// In PMMP5, the TAG_VERSION constant has been removed
+					// We'll use the raw value (v) instead
+					if(strlen($key) === 9 and substr($key, -1) === "v"){
 						$chunkX = Binary::readLInt(substr($key, 0, 4));
 						$chunkZ = Binary::readLInt(substr($key, 4, 4));
 						try{
 							//Try to load the chunk. If success returns it.
 							if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-								if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock)){
+								if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock, $chunkX, $chunkZ)){
 									$convertedChunks++;
 								}
 
@@ -144,7 +147,7 @@ class WorldManager{
 							try{
 								//Try to load the chunk. If success returns it.
 								if(($chunk = $this->world->getChunk($chunkX, $chunkZ, false)) !== null){
-									if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock)){
+									if($hasChanged = $this->convertChunk($chunk, $blockMap, $toBedrock, $chunkX, $chunkZ)){
 										$convertedChunks++;
 									}
 
@@ -186,33 +189,36 @@ class WorldManager{
 	}
 
 	/**
-	 * @param Chunk     $chunk
-	 * @param int[][][] $blockMap
-	 * @param bool      $toBedrock
+	 * @param Chunk $chunk
+	 * @param array<string, array<int, int>> $blockMap Map of source state IDs to target state IDs
+	 * @param bool $toBedrock
 	 *
 	 * @return bool true if the chunk has been converted otherwise false.
 	 */
-	private function convertChunk(Chunk $chunk, array $blockMap, bool $toBedrock) : bool{
+	private function convertChunk(Chunk $chunk, array $blockMap, bool $toBedrock, int $cx, int $cz) : bool{
 		$hasChanged = false;
-		$cx = $chunk->getX();
-		$cz = $chunk->getZ();
 		$signChunkConverted = false;
+		$registry = RuntimeBlockStateRegistry::getInstance();
 
-		for($y = 0; $y < $chunk->getMaxY(); $y++){
+		for($y = 0; $y < 256; $y++){
 			$subChunk = $chunk->getSubChunk($y >> 4);
-			if($subChunk instanceof EmptySubChunk){
+			if($subChunk->isEmptyFast()){
 				continue;
 			}
 
 			for($x = 0; $x < 16; $x++){
 				for($z = 0; $z < 16; $z++){
-					$blockId = $subChunk->getBlockId($x, $y & 0x0f, $z);
-					if($blockId === BlockIds::AIR){
+					// Get the block at this position
+					$blockStateId = $subChunk->getBlockStateId($x, $y & 0x0f, $z);
+
+					// Skip air blocks
+					$block = $registry->fromStateId($blockStateId);
+					if($block->getTypeId() === "minecraft:air"){
 						continue;
 					}
 
-					//At the moment support sign conversion only from java to bedrock
-					if(($blockId === BlockIds::SIGN_POST || $blockId === BlockIds::WALL_SIGN) && $toBedrock){
+					// At the moment support sign conversion only from java to bedrock
+					if(($block->getTypeId() === "minecraft:standing_sign" || $block->getTypeId() === "minecraft:wall_sign") && $toBedrock){
 						if($signChunkConverted){
 							continue;
 						}
@@ -224,9 +230,10 @@ class WorldManager{
 								continue;
 							}
 
+							$text = $tile->getText();
 							for($i = 0; $i < 4; $i++){
 								$line = "";
-								$data = json_decode($tile->getLine($i), true);
+								$data = json_decode($text[$i] ?? "", true);
 								if(is_array($data)){
 									if(isset($data["extra"])){
 										foreach($data["extra"] as $extraData){
@@ -237,24 +244,37 @@ class WorldManager{
 								}else{
 									$line = (string) $data;
 								}
-								$tile->setLine($i, $line);
+								$text[$i] = $line;
 							}
+							$tile->setText($text[0] ?? "", $text[1] ?? "", $text[2] ?? "", $text[3] ?? "");
 
 							$hasChanged = true;
 							$this->convertedSigns++;
 						}
 						$signChunkConverted = true;
-
 					}else{
-						$blockMeta = $subChunk->getBlockData($x, $y & 0x0f, $z);
+						// Convert the block state ID to a string for map lookup
+						$sourceStateIdStr = (string)$blockStateId;
 
-						if(!isset($blockMap[$blockId][$blockMeta])){
+						// Check if we have a mapping for this block state
+						if(!isset($blockMap[$sourceStateIdStr])){
 							continue;
 						}
 
-						$subMap = $blockMap[$blockId][$blockMeta];
-						$this->loader->getLogger()->debug("Replaced block \"$blockId:$blockMeta\" with \"$subMap[0]:$subMap[1]\"");
-						$subChunk->setBlock($x, $y & 0x0f, $z, $subMap[0], $subMap[1]);
+						// Get the target block state ID
+						$targetStateId = $blockMap[$sourceStateIdStr][0] ?? null;
+						if($targetStateId === null){
+							continue;
+						}
+
+						// Get the source and target blocks for logging
+						$sourceBlock = $registry->fromStateId($blockStateId);
+						$targetBlock = $registry->fromStateId($targetStateId);
+
+						$this->loader->getLogger()->debug("Replaced block \"{$sourceBlock->getTypeId()}\" with \"{$targetBlock->getTypeId()}\"");
+
+						// Set the new block
+						$subChunk->setBlockStateId($x, $y & 0x0f, $z, $targetStateId);
 						$hasChanged = true;
 						$this->convertedBlocks++;
 					}
@@ -277,13 +297,13 @@ class WorldManager{
 	}
 
 	private function getWorldExtension() : ?string{
-		$providerName = $this->world->getProvider()->getProviderName();
-		if($providerName === Anvil::getProviderName()){
-			return Anvil::REGION_FILE_EXTENSION;
-		}else if($providerName === McRegion::getProviderName()){
-			return McRegion::REGION_FILE_EXTENSION;
-		}else if($providerName === PMAnvil::getProviderName()){
-			return PMAnvil::REGION_FILE_EXTENSION;
+		$provider = $this->world->getProvider();
+		if($provider instanceof Anvil){
+			return "mca"; // Hardcoded value for Anvil format
+		}else if($provider instanceof McRegion){
+			return "mcr"; // Hardcoded value for McRegion format
+		}else if($provider instanceof PMAnvil){
+			return "mcapm"; // Hardcoded value for PMAnvil format
 		}
 
 		return null;

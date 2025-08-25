@@ -9,11 +9,10 @@ use matcracker\BlocksConverter\world\WorldManager;
 use matcracker\BlocksConverter\world\WorldQueue;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\TextFormat;
 
-final class ConvertQueue extends Command implements PluginIdentifiableCommand{
+final class ConvertQueue extends Command {
 	private $loader;
 
 	public function __construct(Loader $loader){
@@ -24,6 +23,7 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 			['cq']
 		);
 		$this->loader = $loader;
+        $this->setPermission("blocksconverter.command.convertqueue");
 	}
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args) : bool{
@@ -65,7 +65,7 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 		$worldNames = [];
 
 		if(strtolower($args[1]) === "all"){
-			foreach($this->loader->getServer()->getLevels() as $world){
+			foreach($this->loader->getServer()->getWorldManager()->getWorlds() as $world){
 				$worldNames[] = $world->getFolderName();
 			}
 		}else{
@@ -75,8 +75,8 @@ final class ConvertQueue extends Command implements PluginIdentifiableCommand{
 		foreach($worldNames as $worldName){
 			if($action === "add"){
 				if(!WorldQueue::isInQueue($worldName)){
-					if($this->loader->getServer()->loadLevel($worldName)){
-						$world = $this->loader->getServer()->getLevelByName($worldName);
+					if($this->loader->getServer()->getWorldManager()->loadWorld($worldName)){
+						$world = $this->loader->getServer()->getWorldManager()->getWorldByName($worldName);
 						if($world !== null){
 							WorldQueue::addInQueue(new WorldManager($this->loader, $world));
 							$sender->sendMessage(TextFormat::GREEN . "World \"$worldName\" has been added in queue.");
